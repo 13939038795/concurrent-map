@@ -13,7 +13,7 @@ type Animal struct {
 }
 
 func TestMapCreation(t *testing.T) {
-	m := New()
+	m := New(64)
 	if m == nil {
 		t.Error("map is null.")
 	}
@@ -24,7 +24,7 @@ func TestMapCreation(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	m := New()
+	m := New(64)
 	elephant := Animal{"elephant"}
 	monkey := Animal{"monkey"}
 
@@ -37,7 +37,7 @@ func TestInsert(t *testing.T) {
 }
 
 func TestInsertAbsent(t *testing.T) {
-	m := New()
+	m := New(64)
 	elephant := Animal{"elephant"}
 	monkey := Animal{"monkey"}
 
@@ -48,7 +48,7 @@ func TestInsertAbsent(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Get a missing element.
 	val, ok := m.Get("Money")
@@ -83,7 +83,7 @@ func TestGet(t *testing.T) {
 }
 
 func TestHas(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Get a missing element.
 	if m.Has("Money") == true {
@@ -99,7 +99,7 @@ func TestHas(t *testing.T) {
 }
 
 func TestRemove(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	monkey := Animal{"monkey"}
 	m.Set("monkey", monkey)
@@ -125,7 +125,7 @@ func TestRemove(t *testing.T) {
 }
 
 func TestPop(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	monkey := Animal{"monkey"}
 	m.Set("monkey", monkey)
@@ -165,7 +165,7 @@ func TestPop(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	m := New()
+	m := New(64)
 	for i := 0; i < 100; i++ {
 		m.Set(strconv.Itoa(i), Animal{strconv.Itoa(i)})
 	}
@@ -176,7 +176,7 @@ func TestCount(t *testing.T) {
 }
 
 func TestIsEmpty(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	if m.IsEmpty() == false {
 		t.Error("new map should be empty")
@@ -190,7 +190,7 @@ func TestIsEmpty(t *testing.T) {
 }
 
 func TestIterator(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Insert 100 elements.
 	for i := 0; i < 100; i++ {
@@ -214,7 +214,7 @@ func TestIterator(t *testing.T) {
 }
 
 func TestBufferedIterator(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Insert 100 elements.
 	for i := 0; i < 100; i++ {
@@ -238,7 +238,7 @@ func TestBufferedIterator(t *testing.T) {
 }
 
 func TestIterCb(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Insert 100 elements.
 	for i := 0; i < 100; i++ {
@@ -261,7 +261,7 @@ func TestIterCb(t *testing.T) {
 }
 
 func TestItems(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Insert 100 elements.
 	for i := 0; i < 100; i++ {
@@ -276,7 +276,7 @@ func TestItems(t *testing.T) {
 }
 
 func TestConcurrent(t *testing.T) {
-	m := New()
+	m := New(64)
 	ch := make(chan int)
 	const iterations = 1000
 	var a [iterations]int
@@ -335,12 +335,12 @@ func TestConcurrent(t *testing.T) {
 }
 
 func TestJsonMarshal(t *testing.T) {
-	SHARD_COUNT = 2
+	SHARDS_COUNT = 2
 	defer func() {
-		SHARD_COUNT = 32
+		SHARDS_COUNT = 32
 	}()
 	expected := "{\"a\":1,\"b\":2}"
-	m := New()
+	m := New(64)
 	m.Set("a", 1)
 	m.Set("b", 2)
 	j, err := json.Marshal(m)
@@ -355,7 +355,7 @@ func TestJsonMarshal(t *testing.T) {
 }
 
 func TestKeys(t *testing.T) {
-	m := New()
+	m := New(64)
 
 	// Insert 100 elements.
 	for i := 0; i < 100; i++ {
@@ -373,7 +373,7 @@ func TestMInsert(t *testing.T) {
 		"elephant": Animal{"elephant"},
 		"monkey":   Animal{"monkey"},
 	}
-	m := New()
+	m := New(64)
 	m.MSet(animals)
 
 	if m.Count() != 2 {
@@ -406,7 +406,7 @@ func TestUpsert(t *testing.T) {
 		return append(res, nv)
 	}
 
-	m := New()
+	m := New(64)
 	m.Set("marine", []Animal{dolphin})
 	m.Upsert("marine", whale, cb)
 	m.Upsert("predator", tiger, cb)
@@ -445,10 +445,10 @@ func TestUpsert(t *testing.T) {
 }
 
 func TestKeysWhenRemoving(t *testing.T) {
-	m := New()
+	m := New(64)
 
-	// Insert 100 elements.
-	Total := 100
+	// Insert 100000 elements.
+	Total := 100000
 	for i := 0; i < Total; i++ {
 		m.Set(strconv.Itoa(i), Animal{strconv.Itoa(i)})
 	}
@@ -456,9 +456,9 @@ func TestKeysWhenRemoving(t *testing.T) {
 	// Remove 10 elements concurrently.
 	Num := 10
 	for i := 0; i < Num; i++ {
-		go func(c *ConcurrentMap, n int) {
+		go func(c *ConcurrentHashMap, n int) {
 			c.Remove(strconv.Itoa(n))
-		}(&m, i)
+		}(m, i)
 	}
 	keys := m.Keys()
 	for _, k := range keys {
@@ -470,7 +470,7 @@ func TestKeysWhenRemoving(t *testing.T) {
 
 //
 func TestUnDrainedIter(t *testing.T) {
-	m := New()
+	m := New(64)
 	// Insert 100 elements.
 	Total := 100
 	for i := 0; i < Total; i++ {
@@ -522,7 +522,7 @@ func TestUnDrainedIter(t *testing.T) {
 }
 
 func TestUnDrainedIterBuffered(t *testing.T) {
-	m := New()
+	m := New(64)
 	// Insert 100 elements.
 	Total := 100
 	for i := 0; i < Total; i++ {
