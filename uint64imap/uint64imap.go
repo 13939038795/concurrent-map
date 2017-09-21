@@ -327,3 +327,29 @@ func (m *ConcurrentHashMap) AddIfPresent(key uint64, value interface{}) bool {
 	shard.Unlock()
 	return ok
 }
+
+type fun func(key uint64, oldVal, newVal interface{}) interface{}
+
+func (m *ConcurrentHashMap) AddIfPresentWithFun(key uint64, newVal interface{}, fn fun) {
+	// Get map shard.
+	shard := m.GetShard(key)
+	shard.Lock()
+	oldVal, ok := shard.items[key]
+	if ok {
+		shard.items[key] = fn(key, oldVal, newVal)
+	} else {
+		shard.items[key] = newVal
+	}
+	shard.Unlock()
+}
+
+// Removes an element from the map.
+func (m *ConcurrentHashMap) Erase() {
+	for k, _ := range m.Items() {
+		// Try to get shard.
+		shard := m.GetShard(k)
+		shard.Lock()
+		delete(shard.items, k)
+		shard.Unlock()
+	}
+}
