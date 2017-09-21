@@ -54,19 +54,6 @@ go test "github.com/orcaman/concurrent-map"
 To generate your own custom concurrent maps please use concurrent_map_template.txt, the file is a base template for type specific maps.
 For Example to create a new go source file for a **string:int** map,
 in terminal run:
-```
-for uint16  ITOA ==> strconv.Itoa(    E1 ==> )    INT ==>  int(   E2  ===> )
-mkdir ucmap && sed 's/PACKAGE/ucmap/g;s/ITOA/ strconv.Itoa\(/g;s/E1/\)/g;s/INT/int\(/g;s/E2/\)/g;s/KEY/uint16/g;s/VAL/string/g' concurrent_map_template.txt > ./ucmap/ucmap.go
-
-for uint64  ITOA ==> strconv.FormatUint(    E1 ==> )    INT ==>  int(   E2  ===> )
-mkdir uint64imap && sed 's/PACKAGE/uint64imap/g;s/ITOA/ strconv.FormatUint\(/g;s/E1/\)/g;s/INT/int\(/g;s/E2/\)/g;s/KEY/uint64/g;s/VAL/string/g' concurrent_map_template_interface.txt > ./uint64imap/uint64imap.go
-
-for int
-mkdir icmap && sed 's/PACKAGE/icmap/g;s/ITOA/ strconv.Itoa\(/g;s/E1/\)/g;s/INT//g;s/E2//g;s/KEY/int/g;s/VAL/string/g' concurrent_map_template.txt > ./icmap/icmap.go
-
-for string
-mkdir scmap && sed 's/PACKAGE/scmap/g;s/ITOA//g;s/E1//g;s/INT//g;s/E2//g;s/KEY/string/g;s/VAL/string/g' concurrent_map_template.txt > ./scmap/scmap.go
-```
 
 You can change the string and the int in the sed command to whatever you need. 
 
