@@ -268,6 +268,23 @@ func (m *ConcurrentHashMap) IterCb(fn IterCb) {
 	}
 }
 
+func (m *ConcurrentHashMap) IterConcurrentCb(fn IterCb) {
+	var wg sync.WaitGroup
+
+	wg.Add(len(m.Hashmap))
+	for _, shard := range m.HashMap {
+		go func(wg *sync.WaitGroup, shard *ConcurrentMapShared) {
+			shard.RLock()
+			for key, value := range shard.items {
+				fn(key, value)
+			}
+			shard.RUnlock()
+			wg.Done()
+		}(&wg, shard)
+	}
+	wg.Wait()
+}
+
 // Return all keys as []string
 func (m *ConcurrentHashMap) Keys() []string {
 	count := m.Count()
