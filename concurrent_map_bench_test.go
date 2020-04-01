@@ -1,7 +1,10 @@
 package cmap
 
-import "testing"
-import "strconv"
+import (
+	"strconv"
+	"sync/atomic"
+	"testing"
+)
 
 var SHARDS_COUNT = 32
 
@@ -199,33 +202,32 @@ func BenchmarkKeys(b *testing.B) {
 
 func BenchmarkConcurrentMapIterCb(b *testing.B) {
 
-	m := cmap.New()
-	for i:=0; i<1000000; i++ {
+	m := New(SHARDS_COUNT)
+	for i := 0; i < 1000000; i++ {
 		m.Set(strconv.Itoa(i), true)
 	}
 
 	b.ResetTimer()
 
-	for i:=0; i<b.N; i++ {
-		var count int64 =0
+	for i := 0; i < b.N; i++ {
+		var count int64 = 0
 		m.IterCb(func(key string, val interface{}) {
 			atomic.AddInt64(&count, 1)
 		})
 	}
 }
 
-
 func BenchmarkConcurrentMapIterConcurrentCb(b *testing.B) {
 
-	m := cmap.New()
-	for i:=0; i<1000000; i++ {
+	m := New(SHARDS_COUNT)
+	for i := 0; i < 1000000; i++ {
 		m.Set(strconv.Itoa(i), true)
 	}
 
 	b.ResetTimer()
 
-	for i:=0; i<b.N; i++ {
-		var count int64 =0
+	for i := 0; i < b.N; i++ {
+		var count int64 = 0
 		m.IterConcurrentCb(func(key string, val interface{}) {
 			atomic.AddInt64(&count, 1)
 		})

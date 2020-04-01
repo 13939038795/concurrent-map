@@ -5,7 +5,10 @@ import (
 	"hash/fnv"
 	"sort"
 	"strconv"
+	"sync/atomic"
 	"testing"
+
+	"github.com/cespare/xxhash"
 )
 
 type Animal struct {
@@ -260,6 +263,28 @@ func TestIterCb(t *testing.T) {
 	}
 }
 
+func TestIterConcurrentCb(t *testing.T) {
+	m := New(64)
+
+	// Insert 100 elements.
+	for i := 0; i < 100; i++ {
+		m.Set(strconv.Itoa(i), Animal{strconv.Itoa(i)})
+	}
+
+	counter := int64(0)
+	// Iterate over elements.
+	m.IterConcurrentCb(func(key string, v interface{}) {
+		_, ok := v.(Animal)
+		if !ok {
+			t.Error("Expecting an animal object")
+		}
+		atomic.AddInt64(&counter, 1)
+	})
+	if counter != 100 {
+		t.Error("We should have counted 100 elements.")
+	}
+}
+
 func TestItems(t *testing.T) {
 	m := New(64)
 
@@ -391,6 +416,18 @@ func TestFnv32(t *testing.T) {
 	}
 }
 
+func TestXXHash(t *testing.T) {
+	key := []byte("ABC")
+
+	hasher := xxhash.New()
+	_, err := hasher.Write(key)
+	if err != nil {
+		t.Error("github.com/cespare/xxhash function went wrong")
+	} else if hasher.Sum64() != xxHash64(key) {
+		t.Errorf("Bundled xxHash64 produced %d, expected result from github.com/cespare/xxhash is %d", xxHash64(key), hasher.Sum64())
+	}
+}
+
 func TestUpsert(t *testing.T) {
 	dolphin := Animal{"dolphin"}
 	whale := Animal{"whale"}
@@ -441,6 +478,59 @@ func TestUpsert(t *testing.T) {
 	predators, ok := m.Get("predator")
 	if !ok || !compare(predators.([]Animal), []Animal{tiger, lion}) {
 		t.Error("Upsert, then Upsert failed")
+	}
+}
+
+func TestUpdateCb(t *testing.T) {
+	dolphin := Animal{"dolphin"}
+	whale := Animal{"whale"}
+	tiger := Animal{"tiger"}
+	lion := Animal{"lion"}
+
+	cb := func(exists bool, valueInMap interface{}, newValue interface{}) interface{} {
+		nv := newValue.(Animal)
+		if !exists {
+			return []Animal{nv}
+		}
+		res := valueInMap.([]Animal)
+		return append(res, nv)
+	}
+
+	m := New(64)
+	m.Set("marine", []Animal{dolphin})
+	m.UpdateCb("marine", whale, cb)
+	m.UpdateCb("predator", tiger, cb)
+	m.UpdateCb("predator", lion, cb)
+
+	if m.Count() != 1 {
+		t.Error("map should only contain one elements.")
+	}
+
+	compare := func(a, b []Animal) bool {
+		if a == nil || b == nil {
+			return false
+		}
+
+		if len(a) != len(b) {
+			return false
+		}
+
+		for i, v := range a {
+			if v != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	marineAnimals, ok := m.Get("marine")
+	if !ok || !compare(marineAnimals.([]Animal), []Animal{dolphin, whale}) {
+		t.Error("Set, then UpdateCb failed")
+	}
+
+	_, ok = m.Get("predator")
+	if ok {
+		t.Error("UpdateCb, then UpdateCb failed")
 	}
 }
 
