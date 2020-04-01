@@ -271,7 +271,7 @@ func (m *ConcurrentHashMap) IterCb(fn IterCb) {
 func (m *ConcurrentHashMap) IterConcurrentCb(fn IterCb) {
 	var wg sync.WaitGroup
 
-	wg.Add(len(m.Hashmap))
+	wg.Add(len(m.HashMap))
 	for _, shard := range m.HashMap {
 		go func(wg *sync.WaitGroup, shard *ConcurrentMapShared) {
 			shard.RLock()
@@ -392,6 +392,20 @@ func (m *ConcurrentHashMap) AddIfPresent(key string, value interface{}) bool {
 		shard.items[key] = tmp
 	} else {
 		shard.items[key] = value
+	}
+	shard.Unlock()
+	return ok
+}
+
+// Sets the given value under the specified key if it exist.
+func (m *ConcurrentHashMap) UpdateCb(key string, value interface{}, cb UpsertCb) bool {
+	// Get map shard.
+	shard := m.GetShard(key)
+	shard.Lock()
+	v, ok := shard.items[key]
+	if ok {
+		res := cb(ok, v, value)
+		shard.items[key] = res
 	}
 	shard.Unlock()
 	return ok
