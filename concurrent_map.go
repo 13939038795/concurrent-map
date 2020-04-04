@@ -416,7 +416,7 @@ func (m *ConcurrentHashMap) Update(key string, value interface{}) bool {
 	// Get map shard.
 	shard := m.GetShard(key)
 	shard.Lock()
-	v, ok := shard.items[key]
+	_, ok := shard.items[key]
 	if ok {
 		shard.items[key] = value
 	}

@@ -542,9 +542,9 @@ func TestUpdate(t *testing.T) {
 
 	m := New(64)
 	m.Set("marine", []Animal{dolphin})
-	m.Update("marine", whale)
-	m.Update("predator", tiger)
-	m.Update("predator", lion)
+	m.Update("marine", []Animal{whale})
+	m.Update("predator", []Animal{tiger})
+	m.Update("predator", []Animal{lion})
 
 	if m.Count() != 1 {
 		t.Error("map should only contain one elements.")
@@ -568,7 +568,7 @@ func TestUpdate(t *testing.T) {
 	}
 
 	marineAnimals, ok := m.Get("marine")
-	if !ok || !compare(marineAnimals.([]Animal), []Animal{dolphin, whale}) {
+	if !ok || !compare(marineAnimals.([]Animal), []Animal{whale}) {
 		t.Error("Set, then UpdateCb failed")
 	}
 
