@@ -534,6 +534,50 @@ func TestUpdateCb(t *testing.T) {
 	}
 }
 
+func TestUpdate(t *testing.T) {
+	dolphin := Animal{"dolphin"}
+	whale := Animal{"whale"}
+	tiger := Animal{"tiger"}
+	lion := Animal{"lion"}
+
+	m := New(64)
+	m.Set("marine", []Animal{dolphin})
+	m.Update("marine", []Animal{whale})
+	m.Update("predator", []Animal{tiger})
+	m.Update("predator", []Animal{lion})
+
+	if m.Count() != 1 {
+		t.Error("map should only contain one elements.")
+	}
+
+	compare := func(a, b []Animal) bool {
+		if a == nil || b == nil {
+			return false
+		}
+
+		if len(a) != len(b) {
+			return false
+		}
+
+		for i, v := range a {
+			if v != b[i] {
+				return false
+			}
+		}
+		return true
+	}
+
+	marineAnimals, ok := m.Get("marine")
+	if !ok || !compare(marineAnimals.([]Animal), []Animal{whale}) {
+		t.Error("Set, then UpdateCb failed")
+	}
+
+	_, ok = m.Get("predator")
+	if ok {
+		t.Error("Update, then Update failed")
+	}
+}
+
 func TestKeysWhenRemoving(t *testing.T) {
 	m := New(64)
 

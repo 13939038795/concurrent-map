@@ -397,7 +397,7 @@ func (m *ConcurrentHashMap) AddIfPresent(key string, value interface{}) bool {
 	return ok
 }
 
-// Sets the given value under the specified key if it exist.
+// Sets the given value under the specified key if it exist with CALLBACK function in case partial update
 func (m *ConcurrentHashMap) UpdateCb(key string, value interface{}, cb UpsertCb) bool {
 	// Get map shard.
 	shard := m.GetShard(key)
@@ -406,6 +406,19 @@ func (m *ConcurrentHashMap) UpdateCb(key string, value interface{}, cb UpsertCb)
 	if ok {
 		res := cb(ok, v, value)
 		shard.items[key] = res
+	}
+	shard.Unlock()
+	return ok
+}
+
+// Sets the given value under the specified key if it exist.
+func (m *ConcurrentHashMap) Update(key string, value interface{}) bool {
+	// Get map shard.
+	shard := m.GetShard(key)
+	shard.Lock()
+	_, ok := shard.items[key]
+	if ok {
+		shard.items[key] = value
 	}
 	shard.Unlock()
 	return ok
